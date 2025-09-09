@@ -4,7 +4,9 @@ from cocotb.clock import Clock
 
 @cocotb.test()
 async def alu_test(dut):
-    # Start a clock if needed
+    """Test all ALU opcodes with 4-bit operands."""
+
+    # Start clock
     cocotb.fork(Clock(dut.clk, 10, units="ns").start())
 
     # Apply reset
@@ -13,16 +15,20 @@ async def alu_test(dut):
     dut.rst_n.value = 1
     await RisingEdge(dut.clk)
 
-    for sel in range(13):  # 0..12 opcodes used
-        for a in range(16):
-            for b in range(16):
-                dut.ui_in.value = a | (sel << 4)  # upper nibble = sel, lower nibble = a
-                dut.uio_in.value = b
-                dut.ena.value = 1  # always enabled
+    # Enable ALU
+    dut.ena.value = 1
+
+    # Test all opcodes and 4-bit operand combinations
+    for sel in range(13):       # ALU sel 0..12
+        for a in range(16):     # 4-bit operand a
+            for b in range(16): # 4-bit operand b
+                # Drive inputs (mask to 4 bits)
+                dut.ui_in.value = ((sel & 0xF) << 4) | (a & 0xF)
+                dut.uio_in.value = b & 0xFF
 
                 await RisingEdge(dut.clk)
 
-                # Compute expected result
+                # Compute expected 16-bit result
                 if sel == 0:
                     expected = (a + b) & 0xFFFF
                 elif sel == 1:
@@ -52,11 +58,13 @@ async def alu_test(dut):
                 else:
                     expected = 0
 
-                # Check lower and upper 8 bits
+                # Read actual 16-bit ALU output
                 lower = dut.uo_out.value.integer
                 upper = dut.uio_out.value.integer
                 actual = (upper << 8) | lower
 
+                # Assert result
                 assert actual == expected, (
-                    f"ALU failed for sel={sel}, a={a}, b={b}: got 0x{actual:04X}, expected 0x{expected:04X}"
+                    f"ALU failed for sel={sel}, a={a}, b={b}: "
+                    f"got 0x{actual:04X}, expected 0x{expected:04X}"
                 )
