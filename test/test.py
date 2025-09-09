@@ -7,7 +7,7 @@ async def alu_test(dut):
     """Test all ALU opcodes with 4-bit operands."""
 
     # Start clock
-    cocotb.fork(Clock(dut.clk, 10, units="ns").start())
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
 
     # Apply reset
     dut.rst_n.value = 0
@@ -22,39 +22,42 @@ async def alu_test(dut):
     for sel in range(13):       # ALU sel 0..12
         for a in range(16):     # 4-bit operand a
             for b in range(16): # 4-bit operand b
-                # Drive inputs (mask to 4 bits)
+                # Drive inputs: upper nibble = sel, lower nibble = a
                 dut.ui_in.value = ((sel & 0xF) << 4) | (a & 0xF)
                 dut.uio_in.value = b & 0xFF
 
                 await RisingEdge(dut.clk)
 
                 # Compute expected 16-bit result
+                in1 = a  # only lower 4 bits of ui_in used as operand1
+                in2 = b
+
                 if sel == 0:
-                    expected = (a + b) & 0xFFFF
+                    expected = (in1 + in2) & 0xFFFF
                 elif sel == 1:
-                    expected = (a - b) & 0xFFFF
+                    expected = (in1 - in2) & 0xFFFF
                 elif sel == 2:
-                    expected = (a * b) & 0xFFFF
+                    expected = (in1 * in2) & 0xFFFF
                 elif sel == 3:
-                    expected = (a // b if b != 0 else 0) & 0xFFFF
+                    expected = (in1 // in2 if in2 != 0 else 0) & 0xFFFF
                 elif sel == 4:
-                    expected = a & b
+                    expected = in1 & in2
                 elif sel == 5:
-                    expected = a | b
+                    expected = in1 | in2
                 elif sel == 6:
-                    expected = (~a) & 0xFFFF
+                    expected = (~in1) & 0xFFFF
                 elif sel == 7:
-                    expected = (~b) & 0xFFFF
+                    expected = (~in2) & 0xFFFF
                 elif sel == 8:
-                    expected = (a * a) & 0xFFFF
+                    expected = (in1 * in1) & 0xFFFF
                 elif sel == 9:
-                    expected = (b * b) & 0xFFFF
+                    expected = (in2 * in2) & 0xFFFF
                 elif sel == 10:
-                    expected = 0xFFFF if a < b else 0x0000
+                    expected = 0xFFFF if in1 < in2 else 0x0000
                 elif sel == 11:
-                    expected = 0xFFFF if a == b else 0x0000
+                    expected = 0xFFFF if in1 == in2 else 0x0000
                 elif sel == 12:
-                    expected = 0xFFFF if a > b else 0x0000
+                    expected = 0xFFFF if in1 > in2 else 0x0000
                 else:
                     expected = 0
 
