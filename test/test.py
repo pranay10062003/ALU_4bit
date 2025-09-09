@@ -1,51 +1,62 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
-
 import cocotb
-from cocotb.triggers import Timer
-
+from cocotb.triggers import RisingEdge
+from cocotb.clock import Clock
 
 @cocotb.test()
-async def test_alu_4bit(dut):
-    """Test the 4-bit ALU"""
+async def alu_test(dut):
+    # Start a clock if needed
+    cocotb.fork(Clock(dut.clk, 10, units="ns").start())
 
-    dut._log.info("Start ALU test")
+    # Apply reset
+    dut.rst_n.value = 0
+    await RisingEdge(dut.clk)
+    dut.rst_n.value = 1
+    await RisingEdge(dut.clk)
 
-    # Test operands
-    a = 0b1110  # 14
-    b = 0b1001  # 9
+    for sel in range(13):  # 0..12 opcodes used
+        for a in range(16):
+            for b in range(16):
+                dut.ui_in.value = a | (sel << 4)  # upper nibble = sel, lower nibble = a
+                dut.uio_in.value = b
+                dut.ena.value = 1  # always enabled
 
-    # Apply inputs
-    dut.ui_in.value = a
-    dut.uio_in.value = b
+                await RisingEdge(dut.clk)
 
-    # Expected results mapped to ALU opcodes
-    expected = {
-        0b0000: a + b,          # Add
-        0b0001: a - b,          # Sub
-        0b0010: a * b,          # Mul
-        0b0011: a // b,         # Div (integer division)
-        0b0100: a & b,          # AND
-        0b0101: a | b,          # OR
-        0b0110: (~a) & 0xF,     # NOT ui_in (4-bit mask)
-        0b0111: (~b) & 0xF,     # NOT uio_in (4-bit mask)
-        0b1000: a * a,          # Square A
-        0b1001: b * b,          # Square B
-        0b1010: 0xFF if a < b else 0x00,   # Less than
-        0b1011: 0xFF if a == b else 0x00,  # Equal
-        0b1100: 0xFF if a > b else 0x00,   # Greater
-    }
+                # Compute expected result
+                if sel == 0:
+                    expected = (a + b) & 0xFFFF
+                elif sel == 1:
+                    expected = (a - b) & 0xFFFF
+                elif sel == 2:
+                    expected = (a * b) & 0xFFFF
+                elif sel == 3:
+                    expected = (a // b if b != 0 else 0) & 0xFFFF
+                elif sel == 4:
+                    expected = a & b
+                elif sel == 5:
+                    expected = a | b
+                elif sel == 6:
+                    expected = (~a) & 0xFFFF
+                elif sel == 7:
+                    expected = (~b) & 0xFFFF
+                elif sel == 8:
+                    expected = (a * a) & 0xFFFF
+                elif sel == 9:
+                    expected = (b * b) & 0xFFFF
+                elif sel == 10:
+                    expected = 0xFFFF if a < b else 0x0000
+                elif sel == 11:
+                    expected = 0xFFFF if a == b else 0x0000
+                elif sel == 12:
+                    expected = 0xFFFF if a > b else 0x0000
+                else:
+                    expected = 0
 
-    # Loop through all operations
-    for sel, exp in expected.items():
-        dut.ena.value = sel
-        await Timer(1, units="ns")  # allow signals to settle
+                # Check lower and upper 8 bits
+                lower = dut.uo_out.value.integer
+                upper = dut.uio_out.value.integer
+                actual = (upper << 8) | lower
 
-        got = int(dut.uo_out.value)
-        dut._log.info(
-            f"sel={sel:04b}, ui_in={a}, uio_in={b}, got={got}, expected={exp}"
-        )
-
-        assert got == (exp & 0xFF), (
-            f"Mismatch: sel={sel:04b}, got={got}, expected={exp}"
-        )
+                assert actual == expected, (
+                    f"ALU failed for sel={sel}, a={a}, b={b}: got 0x{actual:04X}, expected 0x{expected:04X}"
+                )
