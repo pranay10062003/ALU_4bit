@@ -1,8 +1,8 @@
 # Tiny Tapeout project information
 project:
   title:        "4-bit ALU"      
-  author:       "Your Name"      
-  discord:      "yourdiscord#1234"   # optional, can leave blank
+  author:       "team 8 "      
+  discord:      "discord#1234"   # optional, can leave blank
   description:  "A simple 4-bit ALU that supports arithmetic, logic, and comparison operations."  
   language:     "Verilog" 
   clock_hz:     0       # purely combinational, no clock needed
@@ -12,7 +12,7 @@ project:
 
   # Your top module name must start with "tt_um_". 
   # Replace 'yourgithub' with your actual GitHub username
-  top_module:  "tt_um_yourgithub_alu4bit"
+  top_module:  "tt_um_example"
 
   # List your project's source files here.
   # Source files must be in ./src
