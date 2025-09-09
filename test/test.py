@@ -2,39 +2,46 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import Timer
 
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_alu_4bit(dut):
+    """Test the 4-bit ALU"""
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
+    dut._log.info("Start ALU test")
 
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
+    # Test inputs
+    a = 0b1110  # 14
+    b = 0b1001  # 9
 
-    dut._log.info("Test project behavior")
+    # Apply inputs
+    dut.ui_in.value = a
+    dut.uio_in.value = b
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # A dictionary of operation: expected_value
+    expected = {
+        0b0000: a + b,          # Add
+        0b0001: a - b,          # Sub
+        0b0010: a * b,          # Mul
+        0b0011: a // b,         # Div (integer division)
+        0b0100: a & b,          # AND
+        0b0101: a | b,          # OR
+        0b0110: (~a) & 0xF,     # NOT a (mask to 4 bits)
+        0b0111: (~b) & 0xF,     # NOT b (mask to 4 bits)
+        0b1000: a * a,          # Square a
+        0b1001: b * b,          # Square b
+        0b1010: 0xFF if a < b else 0x00,   # Less than
+        0b1011: 0xFF if a == b else 0x00,  # Equal
+        0b1100: 0xFF if a > b else 0x00,   # Greater than
+    }
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    # Loop through all operations
+    for sel, exp in expected.items():
+        dut.ena.value = sel
+        await Timer(1, units="ns")  # small delay to settle
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+        got = int(dut.uo_out.value)
+        dut._log.info(f"sel={sel:04b}, ui_in={a}, uio_in={b}, got={got}, expected={exp}")
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+        assert got == (exp & 0xFF), f"Mismatch: sel={sel:04b}, got={got}, expected={exp}"
