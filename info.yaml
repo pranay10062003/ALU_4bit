@@ -1,52 +1,51 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
-  language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  title:        "4-bit ALU"      
+  author:       "Your Name"      
+  discord:      "yourdiscord#1234"   # optional, can leave blank
+  description:  "A simple 4-bit ALU that supports arithmetic, logic, and comparison operations."  
+  language:     "Verilog" 
+  clock_hz:     0       # purely combinational, no clock needed
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
+  tiles: "1x1"          
 
-  # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
+  # Your top module name must start with "tt_um_". 
+  # Replace 'yourgithub' with your actual GitHub username
+  top_module:  "tt_um_yourgithub_alu4bit"
 
   # List your project's source files here.
-  # Source files must be in ./src and you must list each source file separately, one per line.
-  # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
+  # Source files must be in ./src
   source_files:
     - "project.v"
 
-# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
-# This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
+# The pinout of your project. Leave unused pins blank.
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
+  ui[0]: "Input A bit 0"
+  ui[1]: "Input A bit 1"
+  ui[2]: "Input A bit 2"
+  ui[3]: "Input A bit 3"
+  ui[4]: "Input B bit 0"
+  ui[5]: "Input B bit 1"
+  ui[6]: "Input B bit 2"
+  ui[7]: "Input B bit 3"
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "ALU output bit 0"
+  uo[1]: "ALU output bit 1"
+  uo[2]: "ALU output bit 2"
+  uo[3]: "ALU output bit 3"
+  uo[4]: "ALU output bit 4"
+  uo[5]: "ALU output bit 5"
+  uo[6]: "ALU output bit 6"
+  uo[7]: "ALU output bit 7"
 
-  # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
+  # Bidirectional pins (unused in your design)
+  uio[0]: "Opcode bit 0"
+  uio[1]: "Opcode bit 1"
+  uio[2]: "Opcode bit 2"
+  uio[3]: "Opcode bit 3"
   uio[4]: ""
   uio[5]: ""
   uio[6]: ""
