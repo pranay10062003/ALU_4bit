@@ -29,7 +29,7 @@ async def alu_test(dut):
                 await RisingEdge(dut.clk)
 
                 # Compute expected 16-bit result
-                in1 = a  # only lower 4 bits of ui_in used as operand1
+                in1 = a  # lower nibble of ui_in
                 in2 = b
 
                 if sel == 0:
